@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our 29 Days Journey ❤️</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #FAF6F0; /* โทนครีมอุ่น */
+            color: #563A23; /* น้ำตาลเข้มอบอุ่น */
+            font-family: sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        h1 { margin-top: 20px; font-size: 1.8rem; color: #8C6239; }
+        p.subtitle { color: #A78B71; margin-bottom: 30px; font-size: 0.9rem; }
+        
+        /* ตาราง 29 วัน */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            max-width: 500px;
+            margin: 0 auto 40px auto;
+        }
+        @media (max-width: 400px) {
+            .grid-container { grid-template-columns: repeat(4, 1fr); }
+        }
+        .day-box {
+            background-color: #FFFFFF;
+            border: 2px solid #E6DDD3;
+            border-radius: 12px;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(86,58,35,0.05);
+        }
+        .day-box:hover { transform: translateY(-3px); }
+        .day-box.locked { background-color: #E6DDD3; color: #A78B71; cursor: not-allowed; }
+        .day-box.opened { background-color: #FFEAE3; border-color: #FFB3A7; color: #E76161; }
+
+        /* หน้าต่าง Pop-up แสดงเนื้อหา */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center; align-items: center;
+            padding: 20px; z-index: 1000;
+        }
+        .modal-content {
+            background-color: #FFFFFF;
+            padding: 25px;
+            border-radius: 20px;
+            max-width: 450px;
+            width: 100%;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .close-btn {
+            position: absolute; top: 15px; right: 20px;
+            font-size: 1.5rem; cursor: pointer; color: #A78B71;
+        }
+        .comic-img {
+            width: 100%; border-radius: 12px;
+            margin: 15px 0; border: 1px solid #E6DDD3;
+        }
+        .message-text {
+            font-size: 1rem; line-height: 1.6; margin-bottom: 20px;
+            white-space: pre-line; text-align: left;
+        }
+        audio { width: 100%; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <h1>Our Journey</h1>
+    <p class="subtitle">เปิดวันละกล่อง ห้ามแอบเปิดก่อนนะ! ❤️</p>
+
+    <div class="grid-container" id="grid"></div>
+
+    <!-- Modal หน้าต่างป๊อปอัป -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2 id="modal-title">Day 1</h2>
+            <img id="modal-img" class="comic-img" src="" alt="Comic">
+            <p id="modal-text" class="message-text">ข้อความซึ้งๆ</p>
+            <audio id="modal-audio" controls controlsList="nodownload"></audio>
+        </div>
+    </div>
+
+    <script>
+        // 1. ตั้งค่าวันเริ่มกิจกรรม: วันที่ 7 มิถุนายน 2026 (ระบบนับตามเวลาเครื่องแฟน)
+        const START_DATE = new Date("2026-06-07T00:00:00"); 
+        const TOTAL_DAYS = 29; // คำนวณจาก 7 มิ.ย. ถึง 5 ก.ค. รวมเป็น 29 วันพอดี
+
+        // 2. ข้อมูลคอมมิก ข้อความ และเพลง (คุณสามารถเปลี่ยนข้อความ และชื่อไฟล์รูป/เพลงได้ที่นี่)
+        const contentData = {
+            1: { img: "images/day1.jpg", music: "music/song1.mp3", text: "7 มิ.ย. - วันแรกของการเดินทาง... เดินทางเหนื่อยไหมคั้บ? พี่ส่งกำลังใจดวงเบ้อเร่อไปให้ในกระเป๋าเดินทางแล้วนะ เปิดฟังเพลงนี้แล้วยิ้มเยอะๆ น้า" },
+            2: { img: "images/day2.jpg", music: "music/song2.mp3", text: "8 มิ.ย. - วันที่ 2 แล้วนะ คิดถึงแก้มตุ่ยๆ ของมุมุจัง วันนี้ที่นุ้นอากาศเป็นยังไงบ้าง อย่าลืมกินข้าวให้อิ่มท้องนะคั้บเบบี๋" },
+            3: { img: "images/day3.jpg", music: "music/song3.mp3", text: "9 มิ.ย. - แท่แด่!3 วันแล้วน้าเบบี๋ แอบส่งรูปทริปแรกของเรามาให้ คิดถึงหนูมากนะคะ ฟังเพลงนี้ก่อนนอนนะคะ" },
+            4: { img: "images/day4.jpg", music: "music/song4.mp3", text: "10 มิ.ย. - วันนี้เป็นยังไงบ้างคะ เรียนหนักมั้ย สนุกรึป่าว สู้ๆนะมุ พี่อยู่ตรงนี้! จุ้บๆๆ เลิ้บยู3000" },
+            5: { img: "images/day5.jpg", music: "music/song5.mp3", text: "11 มิ.ย. - ฮัลโหลลลลล ไปหลายวันแล้วได้กินของอร่อยๆเยอะๆรึยางงงง แฮปปี้มั้ยค้าบ สแอบส่งเพลงหาสาวแปป " },
+            6: { img: "images/day6.jpg", music: "music1/song6.mp3", text: "12 มิ.ย. - คนทางนุ้นสบายดีม้ายยยย คนทางนี้คิดถึงทิ่ฉุด ฟังเพลงทั้งวันระหว่างคิดถึง อุอิ" },
+            7: { img: "images/day7.jpg", music: "music1/song7.mp3", text: "13 มิ.ย. - 1สัปปะดา ผ่านไป ไวเหมือน มาม่า แต่ว่าความคิดถึงยังคงอยู่ ฮึ คิดถึงมากจุง แปะเพลง" },
+            8: { img: "images/day8.jpg", music: "music1/song8.mp3", text: "14 มิ.ย. - สวัสดีจู้ วันนี้ตื่นมาก็คิดถึงหนูเหมือนเดิม เบบี๋สู้ๆนะค้าบบบบบ ฟังเพลงนี้ก่อนนอนนะจุ๊" },
+            9: { img: "images/day9.jpg", music: "music1/song9.mp3", text: "15 มิ.ย. - ขอให้เธอมีวันที่ดี เรียนสนุก ลุกนั่งสบาย ด้อนมาย บีคัสไอมิสยูโซมัช " },
+            10: { img: "images/day10.jpg", music: "music1/song10.mp3", text: "16 มิ.ย. - ใครจะเป็นเส่ดถี ! พี่น่ะสิพี่น่ะสิ! กลับมามีรางวัลให้นะมุจิ๋ว อุอิ" },
+            11: { img: "images/day11.jpg", music: "music2/song11.mp3", text: "17 มิ.ย. - คุณหนูมุจิ๋วเป็นยังไงบ้างค้าบวันนี้ คิดถึงพี่มั้ยๆๆ ฮันแน่วๆๆ ส่งเพลงมาจีบ แหะๆ" },
+            12: { img: "images/day12.jpg", music: "music2/song12.mp3", text: "18 มิ.ย. - ขอเมนูเฟ้บเวอริทเฉิงตูหน่อยค่ะ จะจดไว้พาแฟนสาวผักบุ้งไปกิน อิอิ" },
+            13: { img: "images/day13.jpg", music: "music2/song13.mp3", text: "19 มิ.ย. - คิดถึ๊งงงงงงงงง คิดถึงแฟนมากๆคั๊บส่งกำลังใจให้แฟนด้วย สู้วๆๆ" },
+            14: { img: "images/day14.jpg", music: "music2/song14.mp3", text: "20 มิ.ย. - ว้าวซ่าส์ 2 สัปดาห์แล้วววววว แฟนพี่ยังแฮปปี้มั้ยคั้บบบบ เก่งมากทิ่สุด มากอดรับรางวัล รักหนูมากน้า" },
+            15: { img: "images/day15.jpg", music: "music2/song15.mp3", text: "21 มิ.ย. - วันนี้เหนื่อยมั้ยคะ? พักผ่อนเยอะๆ กินอาหารอร่อยๆนะคะ คิดถึงหนูมาก ฝากเพลงมาให้" },
+            16: { img: "images/day16.jpg", music: "music3/song16.mp3", text: "22 มิ.ย. - สวัสดีคั้บ คุณคนในอนาคตผม1ชม. วันนี้เป็นยังบ้างคั้บ เห็นล่วงหน้ามั้ยว่าแฟนรักมาก อุอิ" },
+            17: { img: "images/day17.jpg", music: "music3/song17.mp3", text: "23 มิ.ย. - เดินทางมาเกินครึ่งแล้ว ขอเสียงแหน่ครั้บ ! ส่งความคิดถึงผ่านเพลงนะคะ" },
+            18: { img: "images/day18.jpg", music: "music3/song18.mp3", text: "24 มิ.ย. - ส่งมอบพลังและกำลังใจให้แด่คนช่างฝันที่อยูทางเฉิงตู มีคนที่บ้านนอกคอยเป็นกำลังใจตรงนี้นะคะ" },
+            19: { img: "images/day19.jpg", music: "music3/song19.mp3", text: "25 มิ.ย. - ก๊อกๆๆๆ มีความรักมาส่งค้าบบบบ ❤️" },
+            20: { img: "images/day20.jpg", music: "music3/song20.mp3", text: "26 มิ.ย. - วันนี้มุจิ๋วเป็นยังไงบ้างน๊าาาาา แอบคิดถึงแฟนมุ้ยยย มีเพลงมาให้ฟังก่อนนอนด้วยนะคะ" },
+            21: { img: "images/day21.jpg", music: "music4/song21.mp3", text: "27 มิ.ย. - สุขสันต์วันครบรอบนะคะเบบี๋ ขอบคุณมากๆเลยนะที่อยู่ด้วยกันจนถึงวันนี้ รักหนูเหมือนวันแรกที่ตั้งใจรักเลยนะคะ เติบโตไปด้วยกันนะ❤️" },
+            22: { img: "images/day22.jpg", music: "music4/song22.mp3", text: "28 มิ.ย. - มุจิ๋ววววววว เหนื่อยมั้ยค้าบบบบ มานวดๆๆด้วยการฟังเพลงนะคะ " },
+            23: { img: "images/day23.jpg", music: "music4/song23.mp3", text: "29 มิ.ย. - อะโหยววววว เป็นยังไงบ้างคะวันนี้ มีเรื่องดีๆเข้ามาทั้งวันเลยใช่มั้ยคะ เพราะงั้นเลยมาส่งเพลงจีบ" },
+            24: { img: "images/day24.jpg", music: "music4/song24.mp3", text: "30 มิ.ย. - วันนี้เป็นยังไงบ้างคั้บ สนุกมั้ย มาส่งกำลังใจ พร้อมกับความคิดถึง ส่งเพลงให้มุฟังก่อนนอน" },
+            25: { img: "images/day25.jpg", music: "music4/song25.mp3", text: "1 ก.ค. - สวัสดีวันแรกของเดือนนะคะ ขอให้หนูเริ่มต้นเดือน(เกิด)ด้วยเรื่องดีๆนะคะ ส่งเพลงมาจีบด้วยค่ะ อุอิ" },
+            26: { img: "images/day26.jpg", music: "music5/song26.mp3", text: "2 ก.ค. - อีกแปปๆๆจะจบคอสแล้วน้าาาาาา คิดถึงแฟนที่รออยู่ป่าววว ส่วนทางนี้คิดถึงมากก ส่งเพลงก่อนนอนค่ะ" },
+            27: { img: "images/day27.jpg", music: "music5/song27.mp3", text: "3 ก.ค. - อุ้วววว อีก 2 วันจะได้ฟัด มุจิ๋วแล้วววว เจอแน่ๆๆๆ ฝากเพลงแทนความรักความคิดถึงคั้บ" },
+            28: { img: "images/day28.jpg", music: "music5/song28.mp3", text: "4 ก.ค. - พรุ่งนี้แล้วสินะ ฮุฮุ พี่จะรอฟัดแก้มอั้ยมุจิ๋ว ของพี่นะคะ ส่งเพลงจีบอีกก่อน" },
+            29: { img: "images/day29.jpg", music: "music5/song29.mp3", text: "5 ก.ค. - Welcome Back! ในที่สุดวันนี้ก็มาถึง วันที่เบบี๋ได้กลับมาสู่อ้อมอกของพี่55 เก่งมากเลยน้ามุจิ๋ว ต่อจากนี้ไม่ต้องดูผ่านเว็บแล้วนะ มากอดกันๆ! ❤️" }
+        };
+
+        const grid = document.getElementById('grid');
+        const now = new Date();
+        
+        // คำนวณวันปัจจุบันที่อนุญาตให้เปิดได้
+        const diffTime = now - START_DATE;
+        const currentDayAllowed = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+        // วนลูปสร้างกล่องตามจำนวนวันจริง (29 วัน)
+        for (let i = 1; i <= TOTAL_DAYS; i++) {
+            const box = document.createElement('div');
+            box.classList.add('day-box');
+            box.innerText = i;
+
+            if (i <= currentDayAllowed) {
+                box.onclick = () => openDay(i);
+                if(localStorage.getItem(`day_${i}`)) {
+                    box.classList.add('opened');
+                }
+            } else {
+                box.classList.add('locked');
+                box.onclick = () => alert("ใจเย็นๆ น้าาา เบบี๋ยังเปิดกล่องของวันนี้ไม่ได้! 🔒");
+            }
+            grid.appendChild(box);
+        }
+
+        function openDay(dayNum) {
+            const data = contentData[dayNum] || { img: "images/default.jpg", music: "", text: "วันนี้เค้าคิดถึงเธอที่สุดเลย!" };
+            
+            document.getElementById('modal-title').innerText = `Day ${dayNum}`;
+            document.getElementById('modal-img').src = data.img;
+            document.getElementById('modal-text').innerText = data.text;
+            
+            const audio = document.getElementById('modal-audio');
+            if(data.music) {
+                audio.src = data.music;
+                audio.style.display = "block";
+            } else {
+                audio.style.display = "none";
+            }
+
+            document.getElementById('modal').style.display = 'flex';
+            
+            localStorage.setItem(`day_${dayNum}`, true);
+            document.querySelectorAll('.day-box')[dayNum-1].classList.add('opened');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+            document.getElementById('modal-audio').pause();
+        }
+    </script>
+</body>
+</html>
